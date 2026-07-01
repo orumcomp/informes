@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Informe de predicación</title>
+<style>
+  :root{
+    --bg:#f6f4ee;
+    --card:#ffffff;
+    --ink:#26332e;
+    --muted:#6b7a73;
+    --accent:#2f6f5e;
+    --accent-dark:#1e4f42;
+    --line:#e1ddd0;
+    --error:#b3432b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:32px 16px;
+  }
+  .card{
+    width:100%;
+    max-width:460px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:32px 28px;
+  }
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--accent);
+    font-weight:600;
+    margin:0 0 6px;
+  }
+  h1{
+    font-size:21px;
+    margin:0 0 24px;
+    font-weight:600;
+    line-height:1.3;
+  }
+  .progress{
+    display:flex;
+    gap:6px;
+    margin-bottom:28px;
+  }
+  .progress span{
+    height:3px;
+    flex:1;
+    background:var(--line);
+    border-radius:2px;
+    transition:background .2s;
+  }
+  .progress span.done{background:var(--accent);}
+  .step{display:none;}
+  .step.active{display:block;}
+  label{
+    display:block;
+    font-size:14px;
+    font-weight:600;
+    margin-bottom:8px;
+    color:var(--ink);
+  }
+  .field{margin-bottom:18px;}
+  input[type=text], input[type=number], select{
+    width:100%;
+    padding:12px 14px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    font-size:16px;
+    background:#fff;
+    color:var(--ink);
+  }
+  input:focus, select:focus, button:focus-visible{
+    outline:2px solid var(--accent);
+    outline-offset:1px;
+  }
+  .options{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .option-btn{
+    text-align:left;
+    padding:14px 16px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:#fff;
+    font-size:15px;
+    color:var(--ink);
+    cursor:pointer;
+  }
+  .option-btn:hover{border-color:var(--accent);}
+  .option-btn.selected{
+    border-color:var(--accent);
+    background:#eef5f2;
+    color:var(--accent-dark);
+    font-weight:600;
+  }
+  .primary-btn{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:8px;
+    background:var(--accent);
+    color:#fff;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+    margin-top:8px;
+  }
+  .primary-btn:disabled{
+    background:#b7c7c1;
+    cursor:not-allowed;
+  }
+  .primary-btn:hover:not(:disabled){background:var(--accent-dark);}
+  .link-btn{
+    display:block;
+    width:100%;
+    text-align:center;
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-size:13px;
+    margin-top:14px;
+    cursor:pointer;
+  }
+  .hint{
+    font-size:13px;
+    color:var(--muted);
+    margin:-8px 0 18px;
+  }
+  .error-box{
+    background:#fbeae6;
+    color:var(--error);
+    border:1px solid #f0c9bd;
+    border-radius:8px;
+    padding:10px 12px;
+    font-size:13px;
+    margin-bottom:16px;
+    display:none;
+  }
+  .center-msg{
+    text-align:center;
+    padding:20px 0;
+  }
+  .center-msg .icon{
+    width:48px;height:48px;
+    border-radius:50%;
+    background:#eef5f2;
+    color:var(--accent);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 16px;
+    font-size:24px;
+  }
+  .center-msg h2{
+    font-size:18px;
+    margin:0 0 8px;
+  }
+  .center-msg p{
+    color:var(--muted);
+    font-size:14px;
+    line-height:1.6;
+    margin:0;
+  }
+  .spinner{
+    width:18px;height:18px;
+    border:2px solid rgba(255,255,255,.4);
+    border-top-color:#fff;
+    border-radius:50%;
+    display:inline-block;
+    animation:spin .7s linear infinite;
+    vertical-align:middle;
+    margin-right:8px;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <p class="eyebrow">Congregación</p>
+  <h1 id="title">Informe mensual de predicación</h1>
+  <div class="progress" id="progress"></div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- Paso 1: login -->
+  <div class="step active" data-step="1">
+    <div class="field">
+      <label for="nombre">Nombre</label>
+      <input type="text" id="nombre" autocomplete="given-name">
+    </div>
+    <div class="field">
+      <label for="apellido">Apellido</label>
+      <input type="text" id="apellido" autocomplete="family-name">
+    </div>
+    <button class="primary-btn" id="btnLogin" onclick="buscarGrupo()">Continuar</button>
+  </div>
+
+  <!-- Paso 2: periodo -->
+  <div class="step" data-step="2">
+    <p class="hint" id="grupoHint"></p>
+    <div class="field">
+      <label for="periodo">Período que vas a informar</label>
+      <select id="periodo"></select>
+    </div>
+    <button class="primary-btn" onclick="goStep(3)">Continuar</button>
+  </div>
+
+  <!-- Paso 3: tuvo actividad -->
+  <div class="step" data-step="3">
+    <label>¿Realizaste actividad de predicación este mes?</label>
+    <div class="options">
+      <button class="option-btn" onclick="setActividad(true)">Sí, prediqué</button>
+      <button class="option-btn" onclick="setActividad(false)">No tuve actividad</button>
+    </div>
+  </div>
+
+  <!-- Paso 4: tipo de actividad -->
+  <div class="step" data-step="4">
+    <label>¿Qué actividad realizaste?</label>
+    <div class="options" id="tipoActividadOpts">
+      <button class="option-btn" data-val="Predico" onclick="setTipo('Predico')">Prediqué</button>
+      <button class="option-btn" data-val="Precursor auxiliar 15h" onclick="setTipo('Precursor auxiliar 15h')">Precursor auxiliar (15 h)</button>
+      <button class="option-btn" data-val="Precursor auxiliar 30h" onclick="setTipo('Precursor auxiliar 30h')">Precursor auxiliar (30 h)</button>
+      <button class="option-btn" data-val="Precursor regular" onclick="setTipo('Precursor regular')">Precursor regular</button>
+    </div>
+  </div>
+
+  <!-- Paso 5a: solo predico -> estudios -->
+  <div class="step" data-step="5a">
+    <div class="field">
+      <label for="estudiosA">Cantidad de estudios bíblicos</label>
+      <input type="number" id="estudiosA" min="0" value="0">
+    </div>
+    <button class="primary-btn" onclick="enviarInforme()">Enviar informe</button>
+  </div>
+
+  <!-- Paso 5b: precursor -> horas + estudios -->
+  <div class="step" data-step="5b">
+    <div class="field">
+      <label for="horasB">Horas realizadas</label>
+      <input type="number" id="horasB" min="0" step="0.5">
+    </div>
+    <div class="field">
+      <label for="estudiosB">Cantidad de estudios bíblicos</label>
+      <input type="number" id="estudiosB" min="0" value="0">
+    </div>
+    <button class="primary-btn" onclick="enviarInforme()">Enviar informe</button>
+  </div>
+
+  <!-- Paso final -->
+  <div class="step" data-step="fin">
+    <div class="center-msg">
+      <div class="icon">✓</div>
+      <h2>¡Gracias por tu informe!</h2>
+      <p id="finMsg">Tu actividad quedó registrada correctamente.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ======= CONFIGURACIÓN: reemplazar con las URLs reales de tus webhooks de N8N =======
+const WEBHOOK_LOGIN_URL   = "https://TU-INSTANCIA-N8N.com/webhook/predicacion-login";
+const WEBHOOK_INFORME_URL = "https://TU-INSTANCIA-N8N.com/webhook/predicacion-informe";
+// =====================================================================================
+
+const totalSteps = 5;
+const stepOrder = ["1","2","3","4","5"];
+let data = { nombre:"", apellido:"", grupo:"", periodo:"", tuvoActividad:null, tipoActividad:"", horas:"", estudios:0 };
+
+function renderProgress(activeIndex){
+  const bar = document.getElementById("progress");
+  bar.innerHTML = "";
+  for(let i=0;i<totalSteps;i++){
+    const s = document.createElement("span");
+    if(i <= activeIndex) s.classList.add("done");
+    bar.appendChild(s);
+  }
+}
+
+function showStep(name){
+  document.querySelectorAll(".step").forEach(el => el.classList.remove("active"));
+  document.querySelector(`.step[data-step="${name}"]`).classList.add("active");
+  const idx = {"1":0,"2":1,"3":2,"4":3,"5a":4,"5b":4,"fin":5}[name];
+  renderProgress(idx);
+  hideError();
+}
+
+function goStep(n){ showStep(String(n)); }
+
+function showError(msg){
+  const box = document.getElementById("errorBox");
+  box.textContent = msg;
+  box.style.display = "block";
+}
+function hideError(){
+  document.getElementById("errorBox").style.display = "none";
+}
+
+function poblarPeriodos(){
+  const sel = document.getElementById("periodo");
+  sel.innerHTML = "";
+  const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  const hoy = new Date();
+  for(let i=0;i<3;i++){
+    const d = new Date(hoy.getFullYear(), hoy.getMonth()-i, 1);
+    const label = `${meses[d.getMonth()]} ${d.getFullYear()}`;
+    const opt = document.createElement("option");
+    opt.value = label;
+    opt.textContent = label;
+    sel.appendChild(opt);
+  }
+}
+poblarPeriodos();
+
+async function buscarGrupo(){
+  const nombre = document.getElementById("nombre").value.trim();
+  const apellido = document.getElementById("apellido").value.trim();
+  if(!nombre || !apellido){
+    showError("Completá nombre y apellido para continuar.");
+    return;
+  }
+  const btn = document.getElementById("btnLogin");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Buscando...';
+  try{
+    const res = await fetch(WEBHOOK_LOGIN_URL, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({nombre, apellido})
+    });
+    const json = await res.json();
+    if(!json.encontrado){
+      showError("No te encontramos en el listado. Consultá con tu superintendente de grupo.");
+      btn.disabled = false;
+      btn.textContent = "Continuar";
+      return;
+    }
+    data.nombre = nombre;
+    data.apellido = apellido;
+    data.grupo = json.grupo;
+    document.getElementById("grupoHint").textContent = `Hola ${nombre}, perteneces a ${json.grupo}.`;
+    goStep(2);
+  }catch(e){
+    showError("No pudimos conectar con el servidor. Probá de nuevo en un momento.");
+  }finally{
+    btn.disabled = false;
+    btn.textContent = "Continuar";
+  }
+}
+
+function setActividad(valor){
+  data.tuvoActividad = valor;
+  data.periodo = document.getElementById("periodo").value;
+  if(valor){
+    goStep(4);
+  }else{
+    enviarInforme();
+  }
+}
+
+function setTipo(valor){
+  data.tipoActividad = valor;
+  document.querySelectorAll('#tipoActividadOpts .option-btn').forEach(b=>{
+    b.classList.toggle('selected', b.dataset.val===valor);
+  });
+  if(valor === "Predico"){
+    showStep("5a");
+  }else{
+    showStep("5b");
+  }
+}
+
+async function enviarInforme(){
+  if(data.tuvoActividad){
+    if(data.tipoActividad === "Predico"){
+      data.horas = "";
+      data.estudios = document.getElementById("estudiosA").value || 0;
+    }else{
+      const horas = document.getElementById("horasB").value;
+      if(!horas){
+        showError("Ingresá las horas realizadas.");
+        return;
+      }
+      data.horas = horas;
+      data.estudios = document.getElementById("estudiosB").value || 0;
+    }
+  }
+
+  try{
+    await fetch(WEBHOOK_INFORME_URL, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(data)
+    });
+  }catch(e){
+    // igual mostramos agradecimiento; si hace falta, agregar manejo de error aquí
+  }
+
+  document.getElementById("finMsg").textContent = data.tuvoActividad
+    ? "Tu actividad quedó registrada correctamente."
+    : "Quedó registrado que no tuviste actividad este mes.";
+  showStep("fin");
+}
+</script>
+</body>
+</html>
