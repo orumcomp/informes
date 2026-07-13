@@ -298,11 +298,19 @@
 </div>
 
 <script>
-// ======= CONFIGURACIÓN: reemplazar con las URLs reales de tus webhooks de N8N =======
-const WEBHOOK_LOGIN_URL     = "https://gmaldonadoit.app.n8n.cloud/webhook/predicacion-login";
-const WEBHOOK_VERIFICAR_URL = "https://gmaldonadoit.app.n8n.cloud/webhook/predicacion-verificar";
-const WEBHOOK_INFORME_URL   = "https://gmaldonadoit.app.n8n.cloud/webhook/predicacion-informe";
-// =====================================================================================
+// ======= CONFIGURACIÓN: pegar acá la URL de tu Web App de Apps Script (termina en /exec) =======
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby031_duzikesA9qv2ehnEBoTf5Erq7OLa6p9-rx2v4h9Uk9COTBBv4XXw1eK9ClCfy/exec";
+// ===============================================================================================
+
+// Nota: se envía SIN header Content-Type para evitar el preflight CORS,
+// que Apps Script no soporta. El body JSON viaja igual y el backend lo parsea.
+async function llamarAPI(accion, payload){
+  const res = await fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({ accion, ...payload })
+  });
+  return res.json();
+}
 
 const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const totalStages = 5;
@@ -353,12 +361,7 @@ async function buscarGrupo(){
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Buscando...';
   try{
-    const res = await fetch(WEBHOOK_LOGIN_URL, {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({nombre, apellido})
-    });
-    const json = await res.json();
+    const json = await llamarAPI("login", { nombre, apellido });
     if(!json.encontrado){
       showError("No te encontramos en el listado. Consultá con tu superintendente de grupo.");
       btn.disabled = false;
@@ -385,12 +388,7 @@ async function verificarInforme(){
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Verificando...';
   try{
-    const res = await fetch(WEBHOOK_VERIFICAR_URL, {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ nombre: data.nombre, apellido: data.apellido, grupo: data.grupo, periodo: data.periodo })
-    });
-    const json = await res.json();
+    const json = await llamarAPI("verificar", { nombre: data.nombre, apellido: data.apellido, grupo: data.grupo, periodo: data.periodo });
     if(json.yaInformado){
       document.getElementById("yaInformadoMsg").textContent = `Ya hay un informe cargado a tu nombre para ${data.periodo}.`;
       showStep("yaInformado");
@@ -455,11 +453,7 @@ async function enviarInforme(){
   }
 
   try{
-    await fetch(WEBHOOK_INFORME_URL, {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify(data)
-    });
+    await llamarAPI("informe", data);
   }catch(e){
     // igual mostramos agradecimiento; si hace falta, agregar manejo de error aquí
   }
